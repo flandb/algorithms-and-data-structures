@@ -8,6 +8,14 @@ which the strings )()( and ()) do not. Give an algorithm that returns true
 if a string contains properly nested and balanced parentheses, and false if
 otherwise. For full credit, identify the position of the first offending
 parenthesis if the string is not properly nested and balanced.
+
+INPUT:  string -- empty or one containing only '(' and ')' chars.
+OUTPUT: boolean -- True if every open paren '(' has matching close paren ')',
+        False (and print index of first offending paren) if not.
+NOTES:  if odd number of parens (unbalanced), can't shortcut False return val
+        with modulus 2 check because index of first offending paren needed.
+
+TODO: Runtime analyses.
 """
 
 from stack import Stack
@@ -16,52 +24,69 @@ from stack import Stack
 # Recursive solution
 def balanced_parens_rec(parens_str=''):
     """
-    Returns True if parens are balanced;
-    False otherwise, with printed index of offending paranthesis.
-    TODO: Debug
-    TODO: Add unit tests
+    Return True if parens are balanced; False otherwise.
+
+    If False, output index of first offending parenthesis without match.
+    TODO: Debug.
+    TODO: Add unit tests.
     """
 
     # Empty strings are considered balanced
     if not parens_str:
         return True
 
+    # False if first char is closing paren, or only one paren in string
     if parens_str[0] == ')' or len(parens_str) == 1:
         print('Index of first unmatched parenthesis: 0')
         return False
 
-    def rec_helper(parens_str, i):
+    def rec_helper(parens_str, open_parens_pos, i):
         """
-        Keep track of opening paren positions in var i so first instance
-        of unmatched paren can be output if string unbalanced.
+        Track position of most recent unmatched paren to return if unbalanced.
         """
 
         # Base case
         if not parens_str:
-            return True
-        elif parens_str[0] == ')':
-            return ')'
-        elif len(parens_str) == 1:
-            # Last character in string is closed paren, no match.
-            print(f'Index of first unmatched parenthesis: {i}')
-            return False
+            if not open_parens_pos:
+                return True
+            else:
+                print(
+                    'Index of first unmatched parenthesis: ' +
+                    str(open_parens_pos.pop())
+                )
+                return False
 
-        if parens_str[0] + rec_helper(parens_str[1:], i + 1) == '()':
-            if parens_str[2]:
-                return rec_helper(parens_str[2:], i + 2)
-            return True
+        if parens_str[0] == ')':
+            if open_parens_pos:
+                # Match -- remove index of most recent unmatched open paren.
+                open_parens_pos.pop()
+                return rec_helper(
+                    parens_str[1:],
+                    open_parens_pos,
+                    i + 1
+                )
+            else:
+                # No current unmatched open paren to match close paren.
+                print(f'Index of first unmatched parenthesis: {i}')
+                return False
+        else:
+            # Add index of open paren to top of stack; most recent unmatched.
+            open_parens_pos.push(i)
+            return rec_helper(
+                parens_str[1:],
+                open_parens_pos,
+                i + 1
+            )
 
-        print(f'Index of first unmatched parenthesis: {i}')
-        return False
-
-    return rec_helper(parens_str, 0)
+    return rec_helper(parens_str, Stack(), 0)
 
 
 # Iterative solution using Stack
 def balanced_parens_iter(parens_str=''):
     """
-    Returns True if parens are balanced;
-    False otherwise, with printed index of offending paranthesis.
+    Return True if parens are balanced; False otherwise.
+
+    If False, output index of first offending parenthesis without match.
     TODO: Add unit tests
     """
 
@@ -72,7 +97,7 @@ def balanced_parens_iter(parens_str=''):
     # Holds opening parentheses '(' -- removed if match found
     stack = Stack()
 
-    # 'stack' variable keeps track of indeces that contain opening parens
+    # 'stack' variable keeps track of indices that contain opening parens
     # and omits the actual character (not needed)
     for i, paren in enumerate(parens_str):
         if paren == '(':
